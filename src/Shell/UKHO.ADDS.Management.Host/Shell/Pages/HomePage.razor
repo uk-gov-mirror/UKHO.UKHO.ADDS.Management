@@ -1,7 +1,59 @@
-﻿@layout ShellLayout
-@page "/"
+﻿@page "/"
 @page "/_dashboard/"
-@using UKHO.ADDS.Management.Host.Shell.Shared
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavManager
 
-<div>Welcome to ADDS Management</div>
+<p>Welcome to ADDS Management</p>
+
+<RadzenText TextStyle="TextStyle.DisplayH5" class="rz-mt-2">Welcome to ADDS Management</RadzenText>
+
+<AuthorizeView Context="auth">
+    <Authorizing>
+        <RadzenText class="rz-mt-4">Loading your session...</RadzenText>
+    </Authorizing>
+    <Authorized>
+        <RadzenText TextStyle="TextStyle.DisplayH6" class="rz-mt-4">
+            Signed in as: <strong>@(auth.User.Identity?.Name ?? "(no name claim)")</strong>
+        </RadzenText>
+
+        <RadzenText class="rz-mt-2">Claims:</RadzenText>
+        <div style="margin-top: 0.5rem;">
+            <table class="rz-table" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var claim in auth.User.Claims.OrderBy(c => c.Type, StringComparer.Ordinal))
+                    {
+                        <tr>
+                            <td><code>@claim.Type</code></td>
+                            <td>@claim.Value</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <RadzenText class="rz-mt-4">Not signed in.</RadzenText>
+        <RadzenButton Text="Login" ButtonStyle="ButtonStyle.Primary" class="rz-mt-2" Click="@OnLoginClicked" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private void OnLoginClicked()
+    {
+        NavManager.NavigateTo("/authentication/login", forceLoad: true);
+    }
+}
+
+
+
+
+
+
+

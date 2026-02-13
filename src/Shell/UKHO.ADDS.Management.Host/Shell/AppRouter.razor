@@ -1,10 +1,22 @@
 ﻿@using UKHO.ADDS.Management.Modules.Samples.Pages
+@using UKHO.ADDS.Management.Modules.FileShare.Pages
+@using UKHO.ADDS.Management.Modules.Permit.Pages
+@using Microsoft.AspNetCore.Components.Authorization
 
 <Router AppAssembly="typeof(App).Assembly"
-        AdditionalAssemblies="new[] { typeof(SamplePage).Assembly }">
+        AdditionalAssemblies="new[] { typeof(SamplePage).Assembly, typeof(FileSharePage).Assembly, typeof(PermitPage).Assembly }">
 
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(ShellLayout)"/>
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(ShellLayout)">
+            <NotAuthorized>
+                <LayoutView Layout="typeof(ShellLayout)">
+                    <AccessDenied />
+                </LayoutView>
+            </NotAuthorized>
+            <Authorizing>
+                <RadzenText>Authorizing...</RadzenText>
+            </Authorizing>
+        </AuthorizeRouteView>
     </Found>
     <NotFound>
         <LayoutView Layout="typeof(ShellLayout)">

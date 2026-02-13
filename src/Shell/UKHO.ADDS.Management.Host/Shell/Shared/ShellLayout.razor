@@ -11,6 +11,9 @@
 @inject ILogger<ShellLayout> Logger
 @inject NavigationManager NavManager
 @inject DeploymentSelectionStorage SelectionStorage
+@inject DeploymentContext DeploymentContext
+@inject ModuleLifecycleOrchestrator ModuleLifecycleOrchestrator
+@inject ConfigurationReloadNotifier ConfigurationReloadNotifier
 @inject IJSRuntime JS
 
 <RadzenComponents />
@@ -107,11 +110,25 @@
     protected override void OnInitialized()
     {
         _pages = DashboardPageService.Pages;
+        DashboardPageService.PagesChanged += OnPagesChanged;
 
         NavManager.LocationChanged += OnLocationChanged;
         _page = DashboardPageService.FindCurrent(new Uri(NavManager.Uri));
 
         Thread.CurrentThread.CurrentCulture = new CultureInfo("en-GB");
+    }
+
+    private void OnPagesChanged(object? sender, EventArgs e)
+    {
+        _pages = DashboardPageService.Pages;
+        _page = DashboardPageService.FindCurrent(new Uri(NavManager.Uri));
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavManager.LocationChanged -= OnLocationChanged;
+        DashboardPageService.PagesChanged -= OnPagesChanged;
     }
 
     protected override async Task OnInitializedAsync()
@@ -143,6 +160,7 @@
         }
 
         _selectedDeploymentId = firstValid.Id;
+        DeploymentContext.SetSelectedDeploymentId(_selectedDeploymentId);
         Logger.LogInformation(
             "ShellLayout: deployments loaded ({Count}); defaulting selection to '{Selected}'",
             _deployments.Count(),
@@ -152,6 +170,7 @@
     private async Task OnSelectedDeploymentIdChanged(string deploymentId)
     {
         _selectedDeploymentId = deploymentId;
+        DeploymentContext.SetSelectedDeploymentId(_selectedDeploymentId);
         await SelectionStorage.SetAsync(ModuleId, _selectedDeploymentId);
     }
 
@@ -199,6 +218,7 @@
         if (!string.Equals(_selectedDeploymentId, selected, StringComparison.Ordinal))
         {
             _selectedDeploymentId = selected;
+            DeploymentContext.SetSelectedDeploymentId(_selectedDeploymentId);
             await JS.InvokeVoidAsync(
                 "console.debug",
                 $"ShellLayout: applying stored selection '{_selectedDeploymentId}'");

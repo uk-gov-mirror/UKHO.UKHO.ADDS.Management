@@ -15,7 +15,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Shell\UKHO.ADDS.Management.Shell\UKHO.ADDS.Management.Shell.csproj" />
+    <ProjectReference Include="..\..\..\src\Shell\UKHO.ADDS.Management.Host\UKHO.ADDS.Management.Host.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\UKHO.ADDS.Management.Modules.Samples\UKHO.ADDS.Management.Modules.Samples.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\UKHO.ADDS.Management.Modules.FileShare\UKHO.ADDS.Management.Modules.FileShare.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\UKHO.ADDS.Management.Modules.Permit\UKHO.ADDS.Management.Modules.Permit.csproj" />
   </ItemGroup>
 
 </Project>

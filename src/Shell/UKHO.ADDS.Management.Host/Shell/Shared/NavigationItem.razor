@@ -14,6 +14,7 @@ else
             <RadzenBadge Text="Updated" Visible=@Example.Updated BadgeStyle="BadgeStyle.Info"/>
             <RadzenBadge Text="New" Visible=@Example.New BadgeStyle="BadgeStyle.Success"/>
             <RadzenBadge Text="Pro" Visible=@Example.Pro BadgeStyle="BadgeStyle.Danger"/>
+            <RadzenBadge Text="Unhealthy" Visible=@Example.Disabled BadgeStyle="BadgeStyle.Warning" />
         </Template>
         <ChildContent>@ChildContent</ChildContent>
     </RadzenPanelMenuItem>
@@ -31,8 +32,13 @@ else
         set => Example.Expanded = value;
     }
 
-    string GetUrl()
+    string? GetUrl()
     {
+        if (Example.Disabled)
+        {
+            return null;
+        }
+
         return Example.Path == null ? Example.Path : $"{Example.Path}{new Uri(navigationManager.Uri).Query}";
     }
 

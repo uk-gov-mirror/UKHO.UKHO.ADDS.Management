@@ -2,6 +2,7 @@
 @inject NavigationManager NavigationManager
 @inject ThemeService ThemeService
 @inject QueryStringThemeService QueryStringThemeService
+@using Microsoft.AspNetCore.Components.Authorization
 <!DOCTYPE html>
 <html lang="en" dir="@(ThemeService.RightToLeft == true ? "rtl" : "ltr")">
 <head>
@@ -25,7 +26,9 @@
     @* Monaco editor CSS removed - was blocked by browser tracking prevention. Re-add when self-hosted. *@
 </head>
 <body class="rz-scrollbars">
-<AppRouter @rendermode="InteractiveServer"/>
+<CascadingAuthenticationState>
+    <AppRouter @rendermode="InteractiveServer"/>
+</CascadingAuthenticationState>
 <div id="blazor-error-ui">
     @if (Env.IsDevelopment())
     {

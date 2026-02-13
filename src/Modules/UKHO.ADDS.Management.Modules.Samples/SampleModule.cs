@@ -11,7 +11,18 @@ namespace UKHO.ADDS.Management.Modules.Samples
             Name = "Sample",
             Path = "/sample/main",
             Icon = "\ue88a",
-            Children = [new(){Name = "sub page", Path="/sample/sub"}]
+            ModuleId = "Samples",
+            Children =
+            [
+                new() { Name = "sub page", Path = "/sample/sub", ModuleId = "Samples" },
+                new()
+                {
+                    Name = "secure",
+                    Path = "/sample/secure",
+                    ModuleId = "Samples",
+                    RequiredRoles = ["showsamplepage"]
+                }
+            ]
         }];
     }
 }

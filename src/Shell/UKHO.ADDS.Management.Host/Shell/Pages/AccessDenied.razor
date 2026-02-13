@@ -1,0 +1,22 @@
+@page "/access-denied"
+
+@using Microsoft.AspNetCore.Components
+
+<RadzenText TextStyle="TextStyle.DisplayH4" TagName="TagName.H1" class="rz-mt-6">
+    Access denied
+</RadzenText>
+
+<RadzenText class="rz-mt-4">
+    You don’t have permission to view this page.
+</RadzenText>
+
+<RadzenButton Text="Back to Home" ButtonStyle="ButtonStyle.Primary" class="rz-mt-6" Click="@GoHome" />
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private void GoHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

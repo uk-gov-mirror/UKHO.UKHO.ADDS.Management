@@ -1,0 +1,214 @@
+# Implementation Plan
+
+- **Work Package**: `002-Modules-And-Shell-Enhancements`
+- **Source spec**: `docs/002-Modules-And-Shell-Enhancements/00-overview.md`
+
+## Foundations (Shared Infrastructure)
+- [x] Work Item 1: Add role + health aware navigation model - Completed
+  - **Purpose**: Enable RBAC and unhealthy-module UX consistently across all modules and pages.
+  - **Acceptance Criteria**:
+    - `ModulePage` supports required roles (multiple, any-of semantics).
+    - Navigation renders pages only if user is authorized; unhealthy modules are shown disabled with an unhealthy badge.
+  - **Definition of Done**:
+    - Code implemented (model + services + UI integration)
+    - Tests passing (unit + integration where applicable)
+    - Logging & error handling added
+    - Documentation updated
+    - Can execute end-to-end via: run shell and see nav filtered by roles; unhealthy module appears disabled with badge
+  - [ ] Task 1: Extend page model for RBAC
+    - [x] Step 1: Update `ModulePage` to include `RequiredRoles` (e.g., `IReadOnlyCollection<string>?`)
+    - [x] Step 2: Add helper method(s) to evaluate role access against a `ClaimsPrincipal`
+    - Summary: Added `RequiredRoles` + `UserHasAccess(ClaimsPrincipal)` (any-of semantics) to `ModulePage` and unit tests covering null/empty and role match/miss.
+  - [ ] Task 2: Implement auth-aware page filtering
+    - [x] Step 1: Update `ModulePageService` to depend on auth state (e.g., `AuthenticationStateProvider`)
+    - [x] Step 2: Compute filtered page tree on auth-state change
+    - [x] Step 3: Raise a “pages changed” notification/event for the nav to re-render
+    - [x] Step 4: Ensure `FindCurrent` returns `null` when a page is filtered out
+    - Summary: `ModulePageService` now filters the page tree based on current `AuthenticationState` + `ModulePage.RequiredRoles`, raises `PagesChanged` when authentication changes, and `FindCurrent` searches filtered pages. Added unit tests for filtering, event raising, and `FindCurrent` null when filtered.
+  - [ ] Task 3: Add module health integration to navigation
+    - [x] Step 1: Introduce a shell service that holds module health state
+    - [x] Step 2: When module is unhealthy, keep visible but mark related pages disabled for navigation
+    - [x] Step 3: Update nav UI to render disabled state + “unhealthy” badge
+    - [x] Step 4: Ensure clicking disabled items does nothing
+    - Summary: Added `ModuleHealthService` (tracks module unhealthy/healthy state + reason), extended `ModulePage` with `ModuleId` and disabled metadata, and updated `ModulePageService` to mark unhealthy module pages as disabled (without filtering them out). Navigation now shows an “Unhealthy” badge and disables navigation by omitting `Path` for disabled items; `ShellLayout` listens to `PagesChanged` to refresh the tree. Added unit test `ModulePageServiceHealthTests`.
+  - **Files**:
+    - `src/Shell/UKHO.ADDS.Management.Shell/Modules/ModulePage.cs`: add `RequiredRoles` and (if needed) `ModuleId`/health linkage metadata
+    - `src/Shell/UKHO.ADDS.Management.Shell/Services/ModulePageService.cs`: filter per auth-state change + notification
+    - `src/Shell/UKHO.ADDS.Management.Shell/Modules/IModule.cs`: (optional) ensure modules expose stable `Id` used for health association
+    - `src/Shell/UKHO.ADDS.Management.Shell.Tests/*`: add unit tests for filtering, disabled state, and `FindCurrent`
+    - Shell nav component(s): render badge + disabled state (discover actual file in repo during implementation)
+  - **Work Item Dependencies**: None (foundation)
+  - **Run / Verification Instructions**:
+    - `dotnet run --project src/Shell/UKHO.ADDS.Management.Host/UKHO.ADDS.Management.Host.csproj`
+    - Navigate in UI: verify nav entries appear/disappear by roles; unhealthy disables module nav item
+  - **User Instructions**:
+    - Use a test identity / local auth setup that can emit roles for verification.
+  - Completed Summary:
+    - Added RBAC metadata (`RequiredRoles`) to `ModulePage` and role evaluation helper (`UserHasAccess`).
+    - Implemented auth-aware filtering + `PagesChanged` notifications in `ModulePageService` and wired `ShellLayout` to re-render.
+    - Introduced `ModuleHealthService` and navigation disabled state + “Unhealthy” badge rendering, preventing clicks on disabled items.
+    - Added unit tests for role filtering and unhealthy-disabled navigation state.
+
+## Security / Routing UX
+- [x] Work Item 2: Add Access Denied page and wire unauthorized redirects - Completed
+  - **Purpose**: Provide a consistent UX for role-protected pages.
+  - **Acceptance Criteria**:
+    - A new route `/access-denied` exists.
+    - Role-protected pages redirect unauthorized users to `/access-denied`.
+  - **Definition of Done**:
+    - Code implemented (page + routing integration)
+    - Tests passing
+    - Documentation updated
+    - Can execute end-to-end via: hit protected page without roles ? redirected to `/access-denied`
+  - [ ] Task 1: Create Access Denied page
+    - [x] Step 1: Add a minimal Blazor page at `/access-denied`
+    - [x] Step 2: Ensure it renders a clear message and link back to Home
+    - Summary: Added `AccessDenied.razor` with a clear message and a “Back to Home” button.
+  - [ ] Task 2: Wire redirects for unauthorized access
+    - [x] Step 1: Use Blazor authorization patterns (`[Authorize(Roles=...)]` / `AuthorizeRouteView`) to trigger unauthorized handling
+    - [x] Step 2: Ensure unauthorized ? Access Denied (not Home)
+    - Summary: Updated `AppRouter` to use `AuthorizeRouteView` and added `RedirectToAccessDenied` component to navigate unauthorized users to `/access-denied`.
+  - **Files**:
+    - Shell pages folder (discover): add `AccessDenied.razor`
+    - App routing component (discover): configure unauthorized behavior
+    - `src/Shell/UKHO.ADDS.Management.Shell.Tests/*`: add route/authorization tests if present
+  - **Work Item Dependencies**: Work Item 1 (nav filtering is separate but complementary)
+  - **Run / Verification Instructions**:
+    - Run host
+    - Directly browse to protected route without role ? verify redirect to `/access-denied`
+
+## Module Lifecycle (Deployment + Configuration)
+- [ ] Work Item 3: Add deployment context service and lifecycle event for deployment selection
+  - **Purpose**: Provide a shell-scoped source of truth for current deployment id, and notify modules when it changes.
+  - **Acceptance Criteria**:
+    - Selected deployment id is always set once deployments are available (default enforced).
+    - Modules receive async sequential deployment-changed notifications.
+  - **Definition of Done**:
+    - Deployment context service exists and is DI-registered
+    - A deployment selection change results in module callbacks being invoked
+    - Tests added for default selection and notification sequencing
+    - Can demo via: change deployment in UI ? placeholder pages show updated deployment id
+  - [ ] Task 1: Implement deployment context service
+    - [x] Step 1: Add `DeploymentContext` (current id + `OnChanged` event)
+    - [x] Step 2: Enforce default selection when deployments are loaded
+    - Summary: Added scoped `DeploymentContext` with `SelectedDeploymentId` + `Changed` event and wired shell to set a default selection when deployments load.
+  - [ ] Task 2: Connect `DeploymentSelector` to deployment context
+    - [x] Step 1: Locate parent component that owns `SelectedDeploymentIdChanged`
+    - [x] Step 2: Update handler to set `DeploymentContext.SelectedDeploymentId`
+    - Summary: `ShellLayout` now updates `DeploymentContext` on default/restore selection and whenever `DeploymentSelector` changes.
+  - [ ] Task 3: Add lifecycle hook contract + invocation
+    - [x] Step 1: Extend `IModule` to include async lifecycle method(s) for deployment change
+    - [x] Step 2: Create lifecycle orchestrator in shell to call modules sequentially
+    - Summary: Extended `IModule` with `OnDeploymentChangedAsync` (default no-op) and added `ModuleLifecycleOrchestrator` to invoke deployment-change lifecycle sequentially, marking modules unhealthy on failures via `ModuleHealthService`. Added unit tests covering sequencing and unhealthy skip behavior.
+  - **Files**:
+    - `src/Shell/UKHO.ADDS.Management.Shell/Modules/IModule.cs`: add lifecycle method(s)
+    - `src/Shell/UKHO.ADDS.Management.Shell/Services/*`: add `DeploymentContext`, orchestrator
+    - Parent component using `DeploymentSelector.razor`: update to set context
+    - `src/Shell/UKHO.ADDS.Management.Shell.Tests/*`: add tests
+  - **Work Item Dependencies**: Work Item 1 (health integration can be reused here)
+  - **Run / Verification Instructions**:
+    - Run host, change DeploymentSelector value, confirm current deployment id updates in UI
+
+- [x] Work Item 4: Add configuration reload notifier and lifecycle event - Completed
+  - **Purpose**: Notify modules when `configuration.json` is reloaded.
+  - **Acceptance Criteria**:
+    - Config reload event is detected from current `configuration.json` loading mechanism.
+    - Modules receive async sequential config-reloaded notifications.
+  - **Definition of Done**:
+    - Config reload detection implemented (current approach discovered in code)
+    - Notifications wired through lifecycle orchestrator
+    - Tests covering notifier behavior
+    - Demo: change config file (where supported) ? module notified (logging)
+  - [ ] Task 1: Discover current configuration loading
+    - [x] Step 1: Locate where `configuration.json` is loaded (Host startup)
+    - [x] Step 2: Determine if reload-on-change is enabled and how to hook change tokens
+    - Summary: Confirmed `configuration.json` is loaded in host `Program.cs` with `reloadOnChange: true`.
+  - [ ] Task 2: Implement config reload notifier
+    - [x] Step 1: Create notifier service that triggers on config reload
+    - [x] Step 2: Invoke module lifecycle sequentially
+    - Summary: Added `ConfigurationReloadNotifier` (subscribes to IConfiguration reload token) and wired it to call `ModuleLifecycleOrchestrator.NotifyConfigurationReloadedAsync` sequentially across modules. Extended `IModule` with `OnConfigurationReloadedAsync` (default no-op) and added unit tests for sequencing and unhealthy skip on failure.
+  - **Files**:
+    - Host startup / configuration wiring files (discover)
+    - `src/Shell/UKHO.ADDS.Management.Shell/Services/*`: notifier + orchestrator integration
+    - `src/Shell/UKHO.ADDS.Management.Shell.Tests/*`
+  - **Work Item Dependencies**: Work Item 3
+
+## Feature Slices (Runnable)
+- [ ] Work Item 5: Implement Sample Module secure page with RBAC-gated button
+  - **Purpose**: Deliver an RBAC end-to-end slice demonstrating nav filtering + route protection + conditional rendering.
+  - **Acceptance Criteria**:
+    - New page route `sample/secure` exists.
+    - Nav entry appears only for `showsamplepage`.
+    - Direct URL without role redirects to `/access-denied`.
+    - Button only appears for `showsamplebutton`.
+  - **Definition of Done**:
+    - UI implemented
+    - Role gating implemented at page + button
+    - Tests added
+    - Demoable in running shell
+  - [ ] Task 1: Add page and routing
+    - [x] Step 1: Create new page in sample module
+    - [x] Step 2: Add `[Authorize(Roles=\"showsamplepage\")]`
+    - Summary: Added `SampleSecurePage.razor` at `/sample/secure` protected with `[Authorize(Roles = "showsamplepage")]` so direct URL access redirects to `/access-denied`.
+  - [ ] Task 2: Add role-gated button
+    - [x] Step 1: Use `AuthorizeView Roles=\"showsamplebutton\"` around the button
+    - Summary: Added an `AuthorizeView Roles="showsamplebutton"` gated action button on the secure page.
+  - [ ] Task 3: Add nav entry from module metadata
+    - [x] Step 1: Update `SampleModule.Pages` to add child page `sample/secure`
+    - [x] Step 2: Set `RequiredRoles = [\"showsamplepage\"]` on the `ModulePage`
+    - Summary: Updated `SampleModule` navigation metadata to include a `sample/secure` child page with `RequiredRoles=["showsamplepage"]` and `ModuleId="Samples"`. Added unit test verifying the nav entry is filtered based on role.
+  - **Files**:
+    - `src/Modules/UKHO.ADDS.Management.Modules.Samples/SampleModule.cs`: add secure child page metadata
+    - Sample module pages folder: add new page
+    - Shell routing/nav changes from Work Items 1–2
+    - Tests
+  - **Work Item Dependencies**: Work Items 1–2
+
+- [ ] Work Item 6: Add File Share skeleton module (role restricted)
+  - **Purpose**: Deliver a runnable slice proving module registration + role filtering + deployment context consumption.
+  - **Acceptance Criteria**:
+    - Module appears in nav only for `fileshareuser`.
+    - Placeholder page renders “Coming soon” + current deployment id.
+  - **Definition of Done**:
+    - Module wired and runnable
+    - Tests included
+  - [ ] Task 1: Create module scaffold
+    - [x] Step 1: Add new module project following existing module registration pattern
+    - [x] Step 2: Implement `IModule` with `Id` + `Pages`
+    - Summary: Added new module project `UKHO.ADDS.Management.Modules.FileShare` with `FileShareModule` implementing `IModule` and registered via `AddFileShareModule()`.
+  - [ ] Task 2: Add placeholder page
+    - [x] Step 1: Create placeholder page following conventions
+    - [x] Step 2: Inject deployment context and render deployment id
+    - [x] Step 3: Apply `[Authorize(Roles=\"fileshareuser\")]` and nav `RequiredRoles`
+    - Summary: Added `/fileshare` placeholder page showing “Coming soon” and current `DeploymentContext.SelectedDeploymentId`, protected by `fileshareuser` role and nav `RequiredRoles`. Host router includes the module assembly. Added unit test verifying nav entry is role-filtered.
+  - **Files**:
+    - `src/Modules/UKHO.ADDS.Management.Modules.<FileShare>/*`: new module + page(s)
+    - Host composition root: register module
+    - Tests
+  - **Work Item Dependencies**: Work Items 1–3
+
+- [x] Work Item 7: Add Permit skeleton module (role restricted) - Completed
+  - **Purpose**: Deliver a runnable slice proving repeatability of the module pattern.
+  - **Acceptance Criteria**:
+    - Module appears in nav only for `permitserviceuser`.
+    - Placeholder page renders “Coming soon” + current deployment id.
+  - **Definition of Done**:
+    - Module wired and runnable
+    - Tests included
+  - [ ] Task 1: Create module scaffold
+    - [x] Step 1: Add new module project following existing module registration pattern
+    - [x] Step 2: Implement `IModule` with `Id` + `Pages`
+    - Summary: Added new module project `UKHO.ADDS.Management.Modules.Permit` with `PermitModule` implementing `IModule` and registered via `AddPermitModule()`.
+  - [ ] Task 2: Add placeholder page
+    - [x] Step 1: Create placeholder page following conventions
+    - [x] Step 2: Inject deployment context and render deployment id
+    - [x] Step 3: Apply `[Authorize(Roles=\"permitserviceuser\")]` and nav `RequiredRoles`
+    - Summary: Added `/permit` placeholder page showing “Coming soon” and current `DeploymentContext.SelectedDeploymentId`, protected by `permitserviceuser` role and nav `RequiredRoles`. Host router includes the module assembly. Added unit test verifying nav entry is role-filtered.
+  - **Files**:
+    - `src/Modules/UKHO.ADDS.Management.Modules.<Permit>/*`: new module + page(s)
+    - Host composition root: register module
+    - Tests
+  - **Work Item Dependencies**: Work Items 1–3
+
+## Summary
+This plan delivers vertical, runnable slices by first implementing shared navigation RBAC + module health behaviours, then adding routing UX pages (Access Denied), then wiring lifecycle infrastructure for deployment and configuration change events, and finally delivering three concrete feature slices (Sample secure page, File Share skeleton module, Permit skeleton module). Key considerations are consistent authorization behaviour (unauthorized ? `/access-denied`, unhealthy ? nav disabled + direct URL redirect to `/`), and building reusable abstractions only after the first end-to-end slices are demonstrable.

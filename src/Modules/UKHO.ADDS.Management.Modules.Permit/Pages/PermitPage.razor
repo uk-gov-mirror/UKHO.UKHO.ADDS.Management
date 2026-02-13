@@ -1,0 +1,18 @@
+@page "/permit"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "permitserviceuser")]
+
+@using UKHO.ADDS.Management.Shell.Services
+
+@inject DeploymentContext DeploymentContext
+
+<RadzenText TextStyle="TextStyle.DisplayH4" TagName="TagName.H1" class="rz-mt-6">
+    Permit
+</RadzenText>
+
+<RadzenText class="rz-mt-4">
+    Coming soon
+</RadzenText>
+
+<RadzenText class="rz-mt-4">
+    Current deployment: <strong>@(DeploymentContext.SelectedDeploymentId ?? "(none)")</strong>
+</RadzenText>
