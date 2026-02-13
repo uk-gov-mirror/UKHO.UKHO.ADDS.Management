@@ -1,4 +1,5 @@
 @page "/fileshare"
+@implements IDisposable
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "fileshareuser")]
 
 @using UKHO.ADDS.Management.Shell.Services
@@ -16,3 +17,20 @@
 <RadzenText class="rz-mt-4">
     Current deployment: <strong>@(DeploymentContext.SelectedDeploymentId ?? "(none)")</strong>
 </RadzenText>
+
+@code {
+    protected override void OnInitialized()
+    {
+        DeploymentContext.Changed += OnDeploymentChanged;
+    }
+
+    private void OnDeploymentChanged(object? sender, DeploymentChangedEventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        DeploymentContext.Changed -= OnDeploymentChanged;
+    }
+}

@@ -1,4 +1,5 @@
-﻿@page "/sample/main"
+﻿@page "/developer/main"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "developer")]
 @using UKHO.ADDS.Management.Shell.Models
 @using UKHO.ADDS.Management.Shell.Services
 @using UKHO.ADDS.Management.Shell.Configuration
@@ -8,6 +9,8 @@
 @using UKHO.ADDS.Management.Modules.Samples.Pages
 @inject IModuleConfigurationProvider ConfigurationProvider
 @inject DeploymentSelectionStorage SelectionStorage
+
+@namespace UKHO.ADDS.Management.Modules.Developer.Pages
 
 <h3>@displayName</h3>
 
@@ -32,10 +35,10 @@ else
 
 @code {
     private string selectedId = string.Empty;
-    private string displayName = "Sample Module";
+    private string displayName = "Developer Module";
     private string baseUrl = string.Empty;
     private int timeoutSeconds = 0;
-    private const string moduleId = "Samples";
+    private const string moduleId = "Developer";
     private string loadError = string.Empty;
     private string configError = string.Empty;
     private string selectionWarning = string.Empty;
@@ -61,7 +64,7 @@ else
         var (options, errorMessage) = SamplePageState.BindOptions(ConfigurationProvider, selectedId, moduleId);
         configError = errorMessage ?? string.Empty;
 
-        displayName = options.DisplayName ?? "Sample Module";
+        displayName = options.DisplayName ?? "Developer Module";
         baseUrl = options.BaseUrl ?? string.Empty;
         timeoutSeconds = options.TimeoutSeconds;
         return Task.CompletedTask;

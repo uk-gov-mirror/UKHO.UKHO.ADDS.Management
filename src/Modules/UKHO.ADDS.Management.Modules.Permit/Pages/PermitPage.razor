@@ -1,4 +1,5 @@
 @page "/permit"
+@implements IDisposable
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "permitserviceuser")]
 
 @using UKHO.ADDS.Management.Shell.Services
@@ -6,7 +7,7 @@
 @inject DeploymentContext DeploymentContext
 
 <RadzenText TextStyle="TextStyle.DisplayH4" TagName="TagName.H1" class="rz-mt-6">
-    Permit
+    Permit Service
 </RadzenText>
 
 <RadzenText class="rz-mt-4">
@@ -16,3 +17,20 @@
 <RadzenText class="rz-mt-4">
     Current deployment: <strong>@(DeploymentContext.SelectedDeploymentId ?? "(none)")</strong>
 </RadzenText>
+
+@code {
+    protected override void OnInitialized()
+    {
+        DeploymentContext.Changed += OnDeploymentChanged;
+    }
+
+    private void OnDeploymentChanged(object? sender, DeploymentChangedEventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        DeploymentContext.Changed -= OnDeploymentChanged;
+    }
+}

@@ -9,34 +9,34 @@ namespace UKHO.ADDS.Management.Shell.Tests;
 public class SampleModuleOptionsBindingTests
 {
     [Fact]
-    public void GetOptions_BindsSampleModuleOptionsConfiguredValues()
+    public void GetOptions_BindsDeveloperModuleOptionsConfiguredValues()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string>
             {
-                ["Deployments:dev:Modules:Samples:BaseUrl"] = "https://dev.api.example.com/",
-                ["Deployments:dev:Modules:Samples:DisplayName"] = "Samples (Dev)",
-                ["Deployments:dev:Modules:Samples:TimeoutSeconds"] = "30"
+                ["Deployments:dev:Modules:Developer:BaseUrl"] = "https://dev.api.example.com/",
+                ["Deployments:dev:Modules:Developer:DisplayName"] = "Developer (Dev)",
+                ["Deployments:dev:Modules:Developer:TimeoutSeconds"] = "30"
             })
             .Build();
 
         var provider = new ModuleConfigurationProvider(configuration, NullLogger<ModuleConfigurationProvider>.Instance);
 
-        var options = provider.GetOptions<TestSampleModuleOptions>("dev", "Samples");
+        var options = provider.GetOptions<TestSampleModuleOptions>("dev", "Developer");
 
         Assert.Equal("https://dev.api.example.com/", options.BaseUrl);
-        Assert.Equal("Samples (Dev)", options.DisplayName);
+        Assert.Equal("Developer (Dev)", options.DisplayName);
         Assert.Equal(30, options.TimeoutSeconds);
     }
 
     [Fact]
-    public void GetOptions_ReturnsDefaultSampleModuleOptionsWhenSectionMissing()
+    public void GetOptions_ReturnsDefaultDeveloperModuleOptionsWhenSectionMissing()
     {
         var configuration = new ConfigurationBuilder().Build();
 
         var provider = new ModuleConfigurationProvider(configuration, NullLogger<ModuleConfigurationProvider>.Instance);
 
-        var options = provider.GetOptions<TestSampleModuleOptions>("dev", "Samples");
+        var options = provider.GetOptions<TestSampleModuleOptions>("dev", "Developer");
 
         Assert.Null(options.BaseUrl);
         Assert.Null(options.DisplayName);

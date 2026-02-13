@@ -1,4 +1,4 @@
-﻿@using UKHO.ADDS.Management.Modules.Samples.Pages
+﻿@using UKHO.ADDS.Management.Modules.Developer.Pages
 @using UKHO.ADDS.Management.Modules.FileShare.Pages
 @using UKHO.ADDS.Management.Modules.Permit.Pages
 @using Microsoft.AspNetCore.Components.Authorization
@@ -10,7 +10,7 @@
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(ShellLayout)">
             <NotAuthorized>
                 <LayoutView Layout="typeof(ShellLayout)">
-                    <AccessDenied />
+                    <RedirectToHome />
                 </LayoutView>
             </NotAuthorized>
             <Authorizing>
@@ -20,12 +20,7 @@
     </Found>
     <NotFound>
         <LayoutView Layout="typeof(ShellLayout)">
-            <RadzenText TextStyle="TextStyle.DisplayH1" TagName="TagName.H1" class="rz-my-12">
-                Page not found
-            </RadzenText>
-            <RadzenText TextStyle="TextStyle.DisplayH5" class="rz-my-12">
-                Sorry, but there's nothing here!
-            </RadzenText>
+            <RedirectToHome />
         </LayoutView>
     </NotFound>
 </Router>

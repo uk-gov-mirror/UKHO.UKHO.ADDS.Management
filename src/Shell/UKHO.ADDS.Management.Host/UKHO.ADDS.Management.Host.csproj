@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
@@ -14,7 +14,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\Modules\UKHO.ADDS.Management.Modules.Samples\UKHO.ADDS.Management.Modules.Samples.csproj" />
+		<ProjectReference Include="..\..\Modules\UKHO.ADDS.Management.Modules.Developer\UKHO.ADDS.Management.Modules.Developer.csproj" />
 		<ProjectReference Include="..\..\Modules\UKHO.ADDS.Management.Modules.FileShare\UKHO.ADDS.Management.Modules.FileShare.csproj" />
 		<ProjectReference Include="..\..\Modules\UKHO.ADDS.Management.Modules.Permit\UKHO.ADDS.Management.Modules.Permit.csproj" />
 		<ProjectReference Include="..\UKHO.ADDS.Management.ServiceDefaults\UKHO.ADDS.Management.ServiceDefaults.csproj" />

@@ -17,12 +17,11 @@ else
     <RadzenDropDown TValue="string"
                     @ref="_dropdown"
                     class="deployment-selector"
-                    Change="OnChange"
                     Data="Deployments"
                     TextProperty="Id"
                     ValueProperty="Id"
-                    Value="SelectedDeploymentId"
-                    ValueChanged="OnValueChanged"
+                    @bind-Value="SelectedDeploymentId"
+                    Change="OnChange"
                     Style="width: 20rem; min-width: 12rem;">
         <ValueTemplate Context="d">
             <div style="font-weight:600;">@d.Id</div>
@@ -65,16 +64,11 @@ else
         }
     }
 
-    private Task OnValueChanged(string value)
-    {
-        SelectedDeploymentId = value;
-        return SelectedDeploymentIdChanged.InvokeAsync(value);
-    }
-
     private async Task OnChange(object? value)
     {
         var id = value?.ToString() ?? string.Empty;
-        await OnValueChanged(id);
+        SelectedDeploymentId = id;
+        await SelectedDeploymentIdChanged.InvokeAsync(id);
 
         // Close the dropdown panel after selection
         await JS.InvokeVoidAsync("eval", @"

@@ -9,8 +9,8 @@ using Radzen;
 using UKHO.ADDS.Management.Host.Extensions;
 using UKHO.ADDS.Management.Host.Shell; // App component
 using UKHO.ADDS.Management.Modules.FileShare.Registration;
+using UKHO.ADDS.Management.Modules.Developer.Registration;
 using UKHO.ADDS.Management.Modules.Permit.Registration;
-using UKHO.ADDS.Management.Modules.Samples.Registration;
 using UKHO.ADDS.Management.Shell.Services;
 using UKHO.ADDS.Management.Shell.Configuration;
 using UKHO.ADDS.Management.Shell.Services.Storage;
@@ -30,8 +30,8 @@ public class Program
 
         builder.AddServiceDefaults();
 
-        // Registers the sample module
-        builder.Services.AddSampleModule();
+        // Registers the developer module
+        builder.Services.AddDeveloperModule();
         builder.Services.AddFileShareModule();
         builder.Services.AddPermitModule();
 
@@ -121,6 +121,10 @@ public class Program
         // Map interactive server components.
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
         app.MapRazorPages();
+
+        // Redirect unknown deep links (for example, a user pasting `/permit`) back to the shell home page.
+        // This avoids returning a raw server 404 without requiring an `_Host` Razor Page.
+        app.MapFallback(() => Results.Redirect("/", permanent: false));
 
         app.MapDefaultEndpoints();
 

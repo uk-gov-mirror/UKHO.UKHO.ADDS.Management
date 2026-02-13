@@ -1,0 +1,24 @@
+@page "/developer/secure"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "developer")]
+
+@namespace UKHO.ADDS.Management.Modules.Developer.Pages
+
+@using Microsoft.AspNetCore.Components.Authorization
+
+<RadzenText TextStyle="TextStyle.DisplayH4" TagName="TagName.H1" class="rz-mt-6">
+    <h1>Sample secure page</h1>
+</RadzenText>
+
+<RadzenText class="rz-mt-4">
+    <p>This page is protected by the <code>developer</code> role.</p>
+</RadzenText>
+
+<AuthorizeView Context="auth">
+    <Authorized>
+        <div class="rz-mt-6">
+            <RadzenButton Style="background-color: #3b82f6; border-color: #3b82f6; color: #ffffff; padding: 0.6rem 1rem; border-radius: 0.5rem;">
+                Developer-only action
+            </RadzenButton>
+        </div>
+    </Authorized>
+</AuthorizeView>

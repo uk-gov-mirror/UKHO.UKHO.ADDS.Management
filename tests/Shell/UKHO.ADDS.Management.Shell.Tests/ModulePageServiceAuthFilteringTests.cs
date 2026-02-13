@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -173,6 +174,12 @@ public class ModulePageServiceAuthFilteringTests
         public string Id => "test";
 
         public IEnumerable<ModulePage> Pages { get; }
+
+        public Task OnDeploymentChangedAsync(string? deploymentId, CancellationToken cancellationToken)
+            => Task.CompletedTask;
+
+        public Task OnConfigurationReloadedAsync(CancellationToken cancellationToken)
+            => Task.CompletedTask;
     }
 
     private sealed class TestAuthenticationStateProvider : AuthenticationStateProvider

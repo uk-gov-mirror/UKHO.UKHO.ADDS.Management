@@ -1,0 +1,42 @@
+@page "/developer/development"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "developer")]
+
+@namespace UKHO.ADDS.Management.Modules.Developer.Pages
+
+@using Microsoft.AspNetCore.Components.Authorization
+
+<RadzenText TextStyle="TextStyle.DisplayH4" TagName="TagName.H1" class="rz-mt-6">
+    <h1>Development</h1>
+</RadzenText>
+
+<AuthorizeView Context="auth">
+    <Authorizing>
+        <RadzenText class="rz-mt-4">Loading your session...</RadzenText>
+    </Authorizing>
+    <Authorized>
+        <RadzenText TextStyle="TextStyle.DisplayH6" class="rz-mt-4">
+            Signed in as: <strong>@(auth.User.Identity?.Name ?? "(no name claim)")</strong>
+        </RadzenText>
+
+        <RadzenText class="rz-mt-2">Claims:</RadzenText>
+        <div style="margin-top: 0.5rem;">
+            <table class="rz-table" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var claim in auth.User.Claims.OrderBy(c => c.Type, StringComparer.Ordinal))
+                    {
+                        <tr>
+                            <td><code>@claim.Type</code></td>
+                            <td>@claim.Value</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </Authorized>
+</AuthorizeView>

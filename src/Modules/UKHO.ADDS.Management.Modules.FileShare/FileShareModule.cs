@@ -17,4 +17,10 @@ public sealed class FileShareModule : IModule
             RequiredRoles = ["fileshareuser"]
         }
     ];
+
+    public Task OnDeploymentChangedAsync(string? deploymentId, CancellationToken cancellationToken)
+        => Task.CompletedTask;
+
+    public Task OnConfigurationReloadedAsync(CancellationToken cancellationToken)
+        => Task.CompletedTask;
 }

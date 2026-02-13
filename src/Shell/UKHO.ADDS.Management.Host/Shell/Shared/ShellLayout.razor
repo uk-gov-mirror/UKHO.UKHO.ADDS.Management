@@ -25,15 +25,14 @@
                 <RadzenColumn Size="5">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
                         <RadzenSidebarToggle Click="@(() => _sidebarExpanded = !_sidebarExpanded)" />
-                        <span style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">UKHO ADDS Mock Dashboard</span>
+                        <span style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">ADDS Management</span>
                     </RadzenStack>
                 </RadzenColumn>
                 <RadzenColumn Size="7">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
                         <div class="align-items-center" style="display: inline-flex; gap: 0.5rem;">
                             <DeploymentSelector Deployments="_deployments"
-                                                SelectedDeploymentId="_selectedDeploymentId"
-                                                SelectedDeploymentIdChanged="OnSelectedDeploymentIdChanged" />
+                                                @bind-SelectedDeploymentId="SelectedDeploymentId" />
 
                             <RadzenButton Text="Logout"
                                           Class="rz-text-nowrap rz-mx-2 rz-mx-lg-4"
@@ -95,6 +94,7 @@
 @code {
     private const string ModuleId = "Samples";
     private const string ModuleAssemblyName = "UKHO.ADDS.Management.Modules.Samples";
+    private const string DefaultDeploymentId = "Dev";
 
     private RadzenSidebar _sidebar0;
     private RadzenBody _body0;
@@ -105,6 +105,22 @@
 
     private IEnumerable<DeploymentRef> _deployments = Enumerable.Empty<DeploymentRef>();
     private string _selectedDeploymentId = string.Empty;
+    private string SelectedDeploymentId
+    {
+        get => _selectedDeploymentId;
+        set
+        {
+            if (string.Equals(_selectedDeploymentId, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _selectedDeploymentId = value;
+            DeploymentContext.SetSelectedDeploymentId(_selectedDeploymentId);
+
+            _ = SelectionStorage.SetAsync(ModuleId, _selectedDeploymentId);
+        }
+    }
     private bool _deploymentSelectionInitialized;
 
     protected override void OnInitialized()
@@ -151,27 +167,20 @@
             return;
         }
 
+        var defaultDeployment = _deployments.FirstOrDefault(d => string.Equals(d.Id, DefaultDeploymentId, StringComparison.Ordinal));
         var firstValid = _deployments.FirstOrDefault(d => !string.IsNullOrWhiteSpace(d.Id));
-        if (firstValid is null)
+        if (defaultDeployment is null && firstValid is null)
         {
             Logger.LogWarning("ShellLayout: deployments loaded ({Count}) but none had a valid 'id'", _deployments.Count());
             _selectedDeploymentId = string.Empty;
             return;
         }
 
-        _selectedDeploymentId = firstValid.Id;
-        DeploymentContext.SetSelectedDeploymentId(_selectedDeploymentId);
+        SelectedDeploymentId = defaultDeployment?.Id ?? firstValid!.Id;
         Logger.LogInformation(
-            "ShellLayout: deployments loaded ({Count}); defaulting selection to '{Selected}'",
+            "ShellLayout: deployments loaded ({Count}); initial selection is '{Selected}'",
             _deployments.Count(),
             _selectedDeploymentId);
-    }
-
-    private async Task OnSelectedDeploymentIdChanged(string deploymentId)
-    {
-        _selectedDeploymentId = deploymentId;
-        DeploymentContext.SetSelectedDeploymentId(_selectedDeploymentId);
-        await SelectionStorage.SetAsync(ModuleId, _selectedDeploymentId);
     }
 
     private void OnLocationChanged(object sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs args)
@@ -211,14 +220,14 @@
             "console.debug",
             $"ShellLayout: stored selection for module '{ModuleId}' is '{stored}'");
 
+        var devDeployment = _deployments.FirstOrDefault(d => string.Equals(d.Id, DefaultDeploymentId, StringComparison.Ordinal));
         var selected = !string.IsNullOrWhiteSpace(stored) && _deployments.Any(d => d.Id == stored)
             ? stored!
-            : _deployments.First(d => !string.IsNullOrWhiteSpace(d.Id)).Id;
+            : devDeployment?.Id ?? _deployments.First(d => !string.IsNullOrWhiteSpace(d.Id)).Id;
 
         if (!string.Equals(_selectedDeploymentId, selected, StringComparison.Ordinal))
         {
-            _selectedDeploymentId = selected;
-            DeploymentContext.SetSelectedDeploymentId(_selectedDeploymentId);
+            SelectedDeploymentId = selected;
             await JS.InvokeVoidAsync(
                 "console.debug",
                 $"ShellLayout: applying stored selection '{_selectedDeploymentId}'");
